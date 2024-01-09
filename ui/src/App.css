@@ -36,3 +36,24 @@
     transform: rotate(360deg);
   }
 }
+
+
+
+.area {
+  width: 80%;
+  padding: 15px;
+  border: 1px solid #333;
+  background: rgba(0, 0, 0, 0.7);
+  margin-left: auto;
+  margin-right: auto;
+}
+
+#dropZone {
+  border: 2px dashed #bbb;
+  -webkit-border-radius: 5px;
+  border-radius: 5px;
+  padding: 50px;
+  text-align: center;
+  font: 21pt bold arial;
+  color: #bbb;
+}

@@ -1,0 +1,14 @@
+fastapi
+pydantic
+uvicorn
+gunicorn
+python-multipart
+pdfplumber
+pandas
+openpyxl
+langchain
+openai
+cohere
+chromadb
+tiktoken
+pypdf

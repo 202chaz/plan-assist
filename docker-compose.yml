@@ -1,0 +1,32 @@
+services:
+  app:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+    ports:
+      - 3001:3001
+    networks:
+      - hbx-network
+    env_file:
+      - .env
+    volumes:
+      - ./app:/code
+    environment:
+      - WATCHFILES_FORCE_POLLING=true
+  ui:
+    build:
+      context: ./ui
+      dockerfile: Dockerfile
+    volumes:
+      - ./ui:/ui
+      - /ui/node_modules
+    ports:
+      - '3000:3000'
+    networks:
+      - hbx-network
+    env_file:
+      - .env
+
+networks:
+  hbx-network:
+    driver: bridge
