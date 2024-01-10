@@ -12,6 +12,7 @@ node_modules
 /build
 
 # misc
+app/__pycache__/
 .env
 .DS_Store
 .env.local

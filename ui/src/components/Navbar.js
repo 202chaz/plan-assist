@@ -9,7 +9,7 @@ export default function NavBar() {
     <Navbar expand="lg" className="bg-body-tertiary pt-3 pb-3 hbx-nav">
       <Container fluid>
         <Navbar.Brand href="#home">
-          <Image src="https://www.dchealthlink.com/themes/dchl/img/logo.png" />
+          <Image src="logo.png" />
         </Navbar.Brand>
         <Navbar.Toggle aria-controls="basic-navbar-nav" />
         <Navbar.Collapse id="basic-navbar-nav">
