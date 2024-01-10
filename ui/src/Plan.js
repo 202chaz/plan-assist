@@ -8,6 +8,9 @@ export default function PlanValidator() {
   const [selectOptions, setSelectOptions] = useState()
   const [pbtFile, setPBTFile] = useState()
   const [pbtData, setPbtData] = useState()
+  const [sbcData, setSbcData] = useState()
+  const [sobData, setSobData] = useState()
+  const [getType, setGetType] = useState()
 
   const handleClose = () => setShow(false);
   const handleShow = () => setShow(true);
@@ -37,14 +40,20 @@ export default function PlanValidator() {
             let formData = new FormData();
             formData.append("file", file);
             setPBTFile(file)
+            setGetType('excel')
             getSelectOptions(formData)
+          } else if (file.type === "application/pdf") {
+            let formData = new FormData();
+            formData.append("file", file);
+            setGetType('pdf')
+            getGPTResponse(formData)
           }
         }
       });
     } else {
       // Use DataTransfer interface to access the file(s)
       [...ev.dataTransfer.files].forEach((file, i) => {
-        console.log(`… file[${i}].name = ${file.name}`);
+        // console.log(`… file[${i}].name = ${file.name}`);
       });
     }
   }
@@ -55,6 +64,7 @@ export default function PlanValidator() {
 
   const selectPlan = (e) => {
     let planData = selectOptions.find((option) => option.key === e.target.value)
+    setGetType('excel')
     handleShow()
     let data = new FormData()
     data.append('plan_name', planData.key);
@@ -90,9 +100,35 @@ export default function PlanValidator() {
     })
   }
 
+  const getGPTResponse = (formData) => {
+    handleShow()
+    axios.post(`${process.env.REACT_APP_API}/parse_pdf`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    })
+    .then((res) => {
+      if (res.data.sbc) setSbcData(res.data.data)
+      if (!res.data.sbc) setSobData(res.data.data)
+      handleClose()
+    })
+    .catch((err) => {
+      console.error(err)
+      handleClose()
+    })
+  }
+
   useEffect(() => {
     if (pbtData) buildPBTable()
   }, [pbtData])
+
+  useEffect(() => {
+    if (sbcData) buildSbcTable()
+  }, [sbcData])
+
+  useEffect(() => {
+    if (sobData) buildSobTable()
+  }, [sobData])
 
   const buildPBTable = () => {
     for (let data of pbtData) {
@@ -103,28 +139,62 @@ export default function PlanValidator() {
       let inNetT2 = data.data[0].data[1].data
       let oonD = data.data[0].data[2].data
 
-      inNetTr.getElementsByClassName('pbt-in-network-tier-1')[0].innerHTML = inNetT1 == "nan" ? '' : inNetT1
-      inNetTr2.getElementsByClassName('pbt-in-network-tier-2')[0].innerHTML = inNetT2 == "nan" ? '' : inNetT2
-      oon.getElementsByClassName('pbt-oon')[0].innerHTML = oonD == "nan" ? '' : oonD
+      inNetTr.getElementsByClassName('pbt-in-network-tier-1')[0].innerHTML = inNetT1 === "nan" ? '' : inNetT1
+      inNetTr2.getElementsByClassName('pbt-in-network-tier-2')[0].innerHTML = inNetT2 === "nan" ? '' : inNetT2
+      oon.getElementsByClassName('pbt-oon')[0].innerHTML = oonD === "nan" ? '' : oonD
+    }
+  }
+
+  const buildSbcTable = () => {
+    for (let option of options) {
+      let inNetTr = document.getElementsByClassName(option)[0]
+      let oon = document.getElementsByClassName(option)[2]
+
+      let sbcOptions = sbcData.filter((sbc) => sbc.key === option)
+
+      let inNetT1 = sbcOptions[0]?.result
+      let oonD = sbcOptions[1]?.result
+
+      inNetTr.getElementsByClassName('sbc-in-network-tier-1')[0].innerHTML = inNetT1 === "nan" ? '' : inNetT1
+      oon.getElementsByClassName('sbc-oon')[0].innerHTML = oonD === "nan" ? '' : oonD
+    }
+  }
+
+  const buildSobTable = () => {
+    for (let option of options) {
+      let inNetTr = document.getElementsByClassName(option)[0]
+      let oon = document.getElementsByClassName(option)[2]
+
+      let sobOptions = sobData.filter((sob) => sob.key === option)
+
+      let inNetT1 = sobOptions[0]?.result
+      let oonD = sobOptions[1]?.result
+
+      inNetTr.getElementsByClassName('sob-in-network-tier-1')[0].innerHTML = inNetT1 === "nan" ? '' : inNetT1
+      oon.getElementsByClassName('sob-oon')[0].innerHTML = oonD === "nan" ? '' : oonD
     }
   }
 
 
   return (
     <>
-    <div className="row p-2">
+    <div className="row p-2 mt-4">
       <div className="col-12">
-        <h1>Plan Assist</h1>
         <div className="area">
-          <div id="dropZone" onDrop={(e) => drop(e)} onDragOver={(event) => allowDrop(event)}>Drop files here</div>
+          <div id="dropZone" onDrop={(e) => drop(e)} onDragOver={(event) => allowDrop(event)}>Drop PBT, SOB, or SBC files here one at a time</div>
         </div>
         { selectOptions &&
           <Container>
             <Row>
-              <Col>
-                <select className="form-select mt-3" aria-label="Default select example" onChange={(e) => selectPlan(e)}>
+              <Col sm={12}>
+                <div className="text-center mt-4">
+                  <h4>Select a plan to continue</h4>
+                </div>
+              </Col>
+              <Col sm={12}>
+                <select className="form-select mt-1" aria-label="Default select example" onChange={(e) => selectPlan(e)}>
                 <option defaultValue>Select Plan</option>
-                { selectOptions.map(option => <option value={option?.key} key={option?.key}>{option?.name}</option>) }
+                { selectOptions.map(option => <option value={option?.key} key={option?.key}>{option?.name} - HIOS: {option?.key}</option>) }
               </select>
               </Col>
             </Row>
@@ -148,19 +218,19 @@ export default function PlanValidator() {
                       <th style={{backgroundColor: '#414141', color: '#fff'}}>SBC</th>
                     </tr>
                     <tr className={option}>
-                      <td><span>In Network (Tier 1)</span><td className={`pbt-in-network-tier-1`}></td></td>
-                      <td><span>In Network (Tier 1)</span><td className={`sob-in-network-tier-1`}></td></td>
-                      <td><span>In Network (Tier 1)</span><td className={`sbc-in-network-tier-1`}></td></td>
+                      <td><span>In Network (Tier 1)</span><td className={`pbt-in-network-tier-1 strong`}></td></td>
+                      <td><span>In Network (Tier 1)</span><td className={`sob-in-network-tier-1 strong`}></td></td>
+                      <td><span>In Network (Tier 1)</span><td className={`sbc-in-network-tier-1 strong`}></td></td>
                     </tr>
                     <tr className={option}>
-                      <td><span>In Network (Tier 2)</span><td className={`pbt-in-network-tier-2`}></td></td>
-                      <td><span>In Network (Tier 2)</span><td className={`sob-in-network-tier-2`}></td></td>
-                      <td><span>In Network (Tier 2)</span><td className={`sbc-in-network-tier-2`}></td></td>
+                      <td><span>In Network (Tier 2)</span><td className={`pbt-in-network-tier-2 strong`}></td></td>
+                      <td><span>In Network (Tier 2)</span><td className={`sob-in-network-tier-2 strong`}></td></td>
+                      <td><span>In Network (Tier 2)</span><td className={`sbc-in-network-tier-2 strong`}></td></td>
                     </tr>
                     <tr className={option}>
-                      <td><span>Out Of Network</span><td className={`pbt-oon`}></td></td>
-                      <td><span>Out Of Network</span><td className={`sob-oon`}></td></td>
-                      <td><span>Out Of Network</span><td className={`sbc-oon`}></td></td>
+                      <td><span>Out Of Network</span><td className={`pbt-oon strong`}></td></td>
+                      <td><span>Out Of Network</span><td className={`sob-oon strong`}></td></td>
+                      <td><span>Out Of Network</span><td className={`sbc-oon strong`}></td></td>
                     </tr>
                   </>
                 )
@@ -170,7 +240,7 @@ export default function PlanValidator() {
         </table>
       </div>
     </div>
-    <AlertModal  show={show} handleClose={handleClose} />
+    <AlertModal show={show} handleClose={handleClose} getType={getType} />
     </>
   )
 }

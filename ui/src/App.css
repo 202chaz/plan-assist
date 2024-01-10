@@ -57,3 +57,17 @@
   font: 21pt bold arial;
   color: #bbb;
 }
+
+.hbx-nav {
+  border-bottom: 3px solid #007bc4;
+  box-shadow: 0 4px 2px -2px rgba(0, 0, 0, 0.2);
+}
+
+.gpt-icon {
+  height: 40px;
+  width: 40px;
+}
+
+.strong {
+  font-weight: bolder;
+}

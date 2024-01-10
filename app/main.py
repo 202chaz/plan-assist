@@ -44,8 +44,7 @@ async def pbt_data(plan_name: str = Form(...), sheet_name: str = Form(...), file
 
 @app.post("/parse_pdf")
 async def parse_pdf(file: UploadFile = File(...)):
-  pdf = pdf_parser.test_upload(file)
-  return pdf
+  return pdf_parser.parse_file(file)
 
 def main() -> None:
   """Invoke the entrypoint function of the script."""
